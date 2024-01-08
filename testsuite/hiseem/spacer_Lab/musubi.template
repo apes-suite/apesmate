@@ -1,0 +1,191 @@
+-- musubi configuration file. 
+package.path = package.path .. ";"..'PATH'.."/seeder.lua"
+require 'SEEDER'
+
+
+-- Flow parameter
+--compute hydralic diameter
+voidage = 1.0 - (math.pi*d_f^2.0/(2.0*l_m*h_ch))
+d_h = 4.0*voidage/(2./h_ch + (1.0-voidage)*(4.0/d_f))
+--density of pure water
+--taken from "Perry Handbook of chemical engineering"
+rho0_p = 998.2071 --kg/m^3
+--dynamic viscosity
+mu = 1.08e-3 --Pa s
+--kinematic viscosity
+nu_phy = mu / rho0_p  --m^2/s
+
+u_mean = ${u_mean}$ --m/s
+u_max = u_mean*3.0/2.0 --m/s
+
+--nElements on filement diameter
+nL = math.ceil(d_f/dx)
+--nElements on hydralic diameter
+nL_h = math.ceil(d_h/dx)
+--Reynolds number
+Re = d_h*u_mean/nu_phy
+--print ("Re:", Re)
+-- acoustic scaling
+u_max_L = 0.04
+dt = u_max_L*dx/u_max
+u_mean_L = 2.0*u_max_L/3.0
+nu_L = nu_phy*dt/dx^2.
+omega = 1.0/(3.0*nu_L+0.5)
+
+press_ref = 0.0
+
+seedPoint = {l_m,d_f,w_ch/2.0}
+
+
+-- maximum number of time steps
+--nSteps = math.ceil(1./dt*2)
+
+-- Musubi configuration file. 
+-- This is a LUA script.
+--inlet = 'ubb'
+--outlet = 'expol'
+tracking_fol = 'TRACKING_FOLDER'
+output_fol = 'OUTPUT_FOLDER'
+restart_fol = 'RESTART_FOLDER'
+
+
+dx = getdxFromLevel( {len_bnd=length_bnd, level=level})
+dt = getdtFromVel( {dx = dx, u_p = u_max, u_l = u_max_L } )
+omega = getOmegaFromdt( {dx=dx, dt=dt, nu_p = nu_phy } )
+
+-- Simulation name
+simulation_name = 'spacer'
+-- Mesh information
+mesh = 'MESH' -- Mesh information
+
+-- Time step settings
+tmax_p = 0.1 --s
+tmax           =  tmax_p/dt     -- total iteration number
+time = {useIterations = true,
+        min = 1, max = tmax, interval = 1000}
+
+
+-- needed to dump variable in physical unit
+physics = { dt = dt, rho0 = rho0_p, setPhysicalQuantities = false }            
+
+
+-- physics setting
+fluid = { 
+        omega_ramping = {predefined='smooth', min_factor = 0.5, max_factor=1.0, from_time=0, to_time=1000*dt}, 
+        omega = omega, rho0 = 1.0 }
+
+interpolation_method = 'compact'
+control_routine = 'fast'
+                     
+-- Initial condition 
+initial_condition = { pressure = press_ref, 
+                      velocityX = 0.0,
+                      velocityY = 0.0,
+                      velocityZ = 0.0 }
+
+identify = {label='spacer2D',layout='d3q19',relaxation='bgk', kind = 'lbm_incomp'}
+
+-- Boundary conditions
+boundary_condition = {  
+ { label = 'south', 
+  kind = 'wall'} 
+,{ label = 'north', 
+   kind = 'wall'} 
+,{ label = 'inlet', 
+   kind = 'inlet_ubb', 
+   order = 1,
+  velocityX = { kind = 'combined',
+              transient= {predefined='smooth', min_factor = 0.0, max_factor=u_max_L, 
+              from_time=0, to_time=1000*dt}, 
+              spatial = {predefined='parabol', 
+                          shape = { kind = 'canoND', object = { origin={0.0,0.0,0.0},
+                                                                vec={0.0,h_ch,0.0}}
+                                  }
+                         }         
+	      },
+   --velocityX = 0.01, 
+   velocityY = 0.0, velocityZ = 0.0 }
+,{ label = 'outlet', 
+   kind = 'outlet_expol',
+   pressure = press_ref}
+,{ label = 'spacer', 
+   kind = 'wall'}
+}
+
+
+
+-- Output settings
+utput = { active = true,          -- VTK output activated?
+           folder = output_fol,     -- Output location
+           vtk = false,             -- VTK output activated?
+           time = { interval = tmax, min = 1, max = tmax } 
+}
+
+ 
+-- Tracking              
+tracking = {
+--{ label = 'convergence',
+--  variable = {{'pressure_phy'}}, 
+--  shape = {kind = 'canoND', object= {origin ={l_ch/2.0,h_ch/2.0,w_ch/2.0},
+--				     vec={{0.0,h_ch,0.0},{0.0,0.0,w_ch}} ,
+--				     segments = {nHeight, nWidth} } },
+--  reduction = 'average',
+--  time = {min = 0, max = tmax, interval = 10},
+--  format='convergence',
+--  convergence = {norm='average', nvals = 50, absolute = true,
+--  condition = { threshold = 1.e-8, operator = '<=' }}
+--}
+
+}
+
+--tracking time
+trac_time = {min = -1, max= tmax, interval = 1000}
+
+table.insert(tracking, 
+   {label='line_pressure_',
+   folder=tracking_fol,
+   variable={{'pressure_phy'}},
+   shape = {kind='canoND', object={origin={0.0, w_ch/2.0, h_ch/2.0},
+                                  vec={{l_ch,0.0,0.0}},
+                                  segments = {nLength}}},
+   time = {min = -1, max= tmax, interval = 100},
+   format = 'asciiSpatial'})
+
+
+  for i = 1, nFilament  do
+    table.insert(tracking, {label='average'..i,
+                            folder=tracking_fol,
+                            variable={{'pressure_phy'}},
+                            shape = {kind='canoND', object={origin={i * l_m -dx +dx/2 , h_ch/2.0, w_ch/2.0},
+                                                           vec={{0.0,h_ch,0.0},{0.0,0.0,w_ch}},
+                                                           segments = {nHeight, nWidth}}},
+                            reduction = 'average',
+                            time = trac_time,
+                            format = 'asciiSpatial'})
+  end
+
+ 
+  for i = 1, nFilament  do
+    table.insert(tracking, {label='averagehrv'..i,
+                            folder=tracking_fol,
+                            variable={{'pressure_phy'}},
+                            shape = {kind='canoND', object={origin={i * l_m -dx +dx/2 , h_ch/2.0, w_ch/2.0},
+                                                           vec={{0.0,h_ch,0.0},{0.0,0.0,w_ch}},
+                                                           segments = {nHeight, nWidth}}},
+                            reduction = 'average',
+                            time = trac_time,
+                            format = 'harvester'})
+  end
+
+         
+          
+
+-- restart 
+restart = {
+      ead = restart_fol..'/spacer_lastHeader.lua',
+      write = restart_fol,
+      time = { min = 0, max = tmax, interval = tmax+1}
+}
+
+
+

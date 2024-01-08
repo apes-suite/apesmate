@@ -1,0 +1,15 @@
+Testcase: Electrical double layer (EDL)
+
+Description: EDL is formed near the surface when the charged surface comes
+in contact with the electrolyte solution. In the EDL, the solution is
+non-electroneutral while in the bulk the solution is electroneutral.
+This testcase is well-suited to investigate the interactions of ions migration
+and its effect on electric potential distribution.
+
+How to run this testcase:
+1) Electric field as analytical solution: 
+   Run 'run_musubi.sh' script to generate mesh and run Multicomponent lattice 
+   Boltzmann solver-Musubi.
+
+2) Electric field from coupled Poisson solver:
+   Run 'run_apesmate.sh' script to run coupled simulation.

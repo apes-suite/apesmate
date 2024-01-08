@@ -1,0 +1,202 @@
+--mesh parameters
+--height of the spacer channel
+h_ch = 0.4e-3 --m
+--diameter of the spacer filament
+d_f = h_ch*0.5
+--radius of the filament
+r_f = d_f*0.5
+--mesh_length to height ratio
+lm_hsp = ${lm_hsp}$
+--mesh length or distance between spacer filament
+l_m = h_ch*lm_hsp
+--number of spacer filament in x-direction
+nFilament = ${nFilament}$
+--length of the channel
+l_ch = l_m*nFilament
+--width of the channel
+w_ch = l_m*2.0
+--Height of the channel in lattice unit/number of elements along the height
+nHeight = ${nHeight}$
+--discretization size
+dx = h_ch/nHeight
+dx_half = dx*0.5
+--Find refinement level required for this dx
+nLength = math.ceil(l_ch/dx)
+nWidth = math.ceil(w_ch/dx) 
+nLength_bnd = 2*nLength+4
+level = math.ceil(math.log(nLength_bnd)/math.log(2))
+length_bnd = (2^level)*dx
+
+outputname = 'spacer'
+outputpreview = false 
+--mesh folder
+folder = 'mesh'
+
+
+-- bounding cube: two entries: origin and length in this
+-- order, if no keys are used
+bounding_cube = {origin = {-dx, -dx, -dx},
+                length = length_bnd}
+
+-- minimum refinement level in fluid domain
+minlevel = level
+
+-- Laboratory scale spacer:
+-- length=20 cm,width=10 cm,
+-- filament, radius = 0.01 cm
+-- spacer gap = 0.1 cm ! distance between two parallel filament
+-- offset = 0.0 ! offset of spacer along its height in bounding box
+-- default offset=0.0. create spacer in bounding box origin
+-- boundary_label = 'spacer'. define boundary name
+spatial_object = {
+  {
+    attribute = {
+      kind = 'seed',
+      label='seed'
+    },
+    geometry = {
+      kind = 'canoND',
+      object = {
+        origin = {-dx,-dx,-dx},
+        vec = { {l_ch, 0.0,0.0},
+                {0.0, h_ch, 0.0},
+                {0.0,0.0,w_ch}}
+
+
+      }
+    }
+  },
+
+  {
+    -- Defining a domain boundary
+    attribute = {
+      kind = 'boundary', -- or seed, refinement
+      label = 'spacer',   -- some label to identify the boundary condition
+--      level = 1          -- level to refine this object with, default = 0
+    },
+    geometry = {
+      kind = 'spacer',
+      object = {
+        length = {
+          vec = {l_ch+2*dx,0.0,0.0},
+          filament_gap = l_m,
+          radius = r_f,
+          origin = {-dx,d_f,l_m/2.}
+        },
+        width = { 
+          vec = {0.0,0.0,w_ch+2*dx},
+          filament_gap = l_m,
+          radius = r_f,
+          origin = {l_m/2,d_f,-dx}
+        },
+          interwoven = true
+      }
+    }
+  },  
+  {
+    attribute = {
+      kind = 'boundary',
+      label = 'inlet'
+    },
+    geometry = {
+      kind = 'canoND',
+      object = {
+        origin = {-dx/2.0,-dx,-dx},
+        vec = { {0.0,h_ch+2*dx,0.0},
+                {0.0,0.0,w_ch+2*dx}}
+      }
+    }
+  },
+  {
+    attribute = {
+      kind = 'boundary',
+      label = 'outlet'
+    },
+    geometry = {
+      kind = 'canoND',
+      object = {
+        origin = {l_ch+dx/2.,-dx,-dx},
+        vec = { {0.0,h_ch+2*dx,0.0},
+                {0.0,0.0,w_ch+2*dx}}
+      }
+    }
+  },
+
+--  {
+--    attribute = {
+--      kind = 'boundary',
+--      label = 'left'
+--    },
+--    geometry = {
+--      kind = 'canoND',
+--      object = {
+--        origin = {-dx,-dx,-dx/2.0},
+--        vec = { {0.0,h_ch+2*dx,0.0},
+--                {l_ch+4*dx,0.0,0.0} }
+--      }
+--    }
+--  },  
+--  {
+--    attribute = {
+--      kind = 'boundary',
+--      label = 'right'
+--    },
+--    geometry = {
+--      kind = 'canoND',
+--      object = {
+--        origin = {-dx,-dx,w_ch+dx/2.0},
+--        vec = { {l_ch+4*dx,0.0,0.0},
+--                {0.0,h_ch+2*dx,0.0}}
+--      }
+--    }
+--  },
+  {
+    attribute = {
+      kind = 'periodic',
+      level = 1
+    },
+    geometry = {
+      kind = 'periodic',
+      object = {
+        plane1 = { 
+          origin = {-dx,-dx,-dx/2.0},
+          vec = { {0.0,h_ch+2*dx,0.0},
+                  {l_ch+4*dx,0.0,0.0} }
+        },
+        plane2 = {
+          origin = {-dx,-dx,w_ch+dx/2.0},
+          vec = { {l_ch+4*dx,0.0,0.0},
+                  {0.0,h_ch+2*dx,0.0}}
+        }
+      }  
+    }
+  },
+  {
+    attribute = {
+      kind = 'boundary',
+      label = 'south'
+    },
+    geometry = {
+      kind = 'canoND',
+      object = {
+        origin = {-dx,-dx/2.,-dx},
+        vec = { {l_ch+4*dx,0.0,0.0},
+                {0.0,0.0,w_ch+2*dx}}
+      }
+    }
+  },  
+  {
+    attribute = {
+      kind = 'boundary',
+      label = 'north'
+    },
+    geometry = {
+      kind = 'canoND',
+      object = {
+        origin = {-dx,h_ch+dx/2.0,-dx},
+        vec = { {l_ch+4*dx,0.0,0.0},
+                {0.0,0.0,w_ch+2*dx}}
+      }
+    }
+  },                 
+}

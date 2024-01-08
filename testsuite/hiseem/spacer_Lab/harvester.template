@@ -1,0 +1,67 @@
+require "seeder"
+
+name = 'spacer'
+
+selector = 'mesh'
+
+--------------------------------------------------------------------------------
+-- Load general configuration options from the treelm library.
+--cube_length = 1.0 -- Has no relevance here, but needed for treelm/config
+--require 'treelm/config'
+--------------------------------------------------------------------------------
+
+-- define the input  
+if selector == 'mesh' then
+input = {
+         mesh = {folder = '../mesh/', solid = true}
+        }
+else
+input = {
+         read = 'restart/spacer_lastHeader.lua',
+        }
+end 
+
+
+-- define the output
+if selector == 'mesh' then 
+output = {  -- some general information 
+            folder = 'harvester/',     -- Output location           
+           {
+	    solid = true, -- dump solid elements?
+	    format = 'VTU',
+           label = 'mesh'
+           },
+          }
+elseif selector == 'allFluid' then
+
+output = {
+           folder = 'harvester/',		
+	  { 
+	    requestedData = { variable = { {'pressure_phy'}, {'velocity_phy'}}},
+	   label ='allFluid',
+           format = 'VTU',   -- Output format                
+          },             
+         }
+
+elseif selector =='tracking' then
+output = {  -- some general information 
+            folder = 'harvester/',     -- Output location
+  	}
+
+for i = 1,22  do
+    table.insert(output, {
+
+           requestedData = { variable = { {'pressure_phy'}, {'velocity_phy'}}},
+	   label ='tracking plane'..i,
+           shape = {kind='canoND', object={origin={i * l_m/2.0 -dx +dx/2 , h_ch/2.0, w_ch/2.0},
+                                        vec={{0.0,h_ch,0.0},{0.0,0.0,w_ch}},
+                                         segments = {nHeight, nWidth}}},
+
+           format = 'VTU',   -- Output format
+
+         } )            
+end      
+
+end
+ 
+        
