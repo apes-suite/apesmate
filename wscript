@@ -10,6 +10,8 @@ VERSION = '1'
 top = '.'
 out = 'build'
 
+sol_pre = {"ateles": "atl", "musubi": "mus"}
+
 def options(opt):
     import argparse
     preparse = argparse.ArgumentParser(add_help=False)
@@ -19,7 +21,9 @@ def options(opt):
     preparse.add_argument('--musubi_path', action='store', help='Path to Musubi.')
     preopts, remopts = preparse.parse_known_args()
 
-    opt.recurse('treelm')
+    opt.recurse('bin')
+    opt.recurse('aotus')
+    opt.recurse('tem')
 
     solv_opt = opt.add_option_group('Apes packages to include')
     solv_opt.add_option('--no_ateles', action='store_true', help='Do not attempt to use Ateles.')
@@ -35,7 +39,7 @@ def options(opt):
       opt.recurse(path_for_apesPackage(preopts.ateles_path,'ateles'))
     if not preopts.no_musubi:
       opt.recurse(path_for_apesPackage(preopts.musubi_path,'musubi'))
-    
+
 
 def path_for_apesPackage(solv_path, solv_name):
     """
@@ -65,7 +69,7 @@ def path_for_apesPackage(solv_path, solv_name):
             Logs.error('No wscript found for ' + solv_name + ' at '
                        + solv_path + '/wscript')
     else:
-        solv_path = 'plugins/APES_'+solver
+        solv_path = 'plugins/APES_'+solver+'/'+sol_pre[solver]
         if os.path.exists(solv_path + '/wscript'):
             Logs.warn(solv_name + ' used from default APES location!')
             slvpath = solv_path
@@ -101,7 +105,7 @@ def conf_for_apesPackage(conf, solv_path, solv_name):
             Logs.error('No wscript found for ' + solv_name + ' at '
                        + solv_path + '/wscript')
     else:
-        solv_path = 'plugins/APES_'+solver
+        solv_path = 'plugins/APES_'+solver+'/'+sol_pre[solver]
         if os.path.exists(solv_path + '/wscript'):
             Logs.warn(solv_name + ' used from default APES location!')
 #            conf.recurse(solv_path, 'subconf')
@@ -112,7 +116,18 @@ def conf_for_apesPackage(conf, solv_path, solv_name):
 def configure(conf):
     from waflib import Logs
     conf.env.solv_path = {}
-    conf.recurse('treelm')
+    conf.recurse('aotus', 'subconf')
+    conf.recurse('bin', 'preconfigure')
+    conf.load('coco')
+    conf.env['COCOSET'] = 'default.coco'
+    if not conf.options.coco_reports:
+      # Make coco silent, if not explicitly asked for reports:
+      if conf.env.COCOFLAGS:
+        conf.env.COCOFLAGS.insert(0, '-s')
+        conf.env.COCOFLAGS.append('-ad')
+      else:
+        conf.env.COCOFLAGS = ['-s', '-ad']
+    conf.recurse('tem')
     conf.setenv('')
 
     Logs.warn('Apes package specific configuration:')
@@ -125,9 +140,9 @@ def configure(conf):
         #  conf.recurse(conf.options.ateles_path['ateles']+'/polynomials')
         #else:
         #  conf.recurse('plugins/APES_ateles/polynomials')
-          
+
         conf_for_apesPackage(conf, conf.options.ateles_path, 'Ateles')
-        conf.recurse(conf.env.solv_path['ateles']+'/polynomials')
+        conf.recurse(conf.env.solv_path['ateles']+'/../polynomials')
     if not conf.options.no_musubi:
         conf_for_apesPackage(conf, conf.options.musubi_path, 'Musubi')
         conf.recurse(conf.env.solv_path['musubi'], "subconf")
@@ -139,28 +154,31 @@ def configure(conf):
 
     # Add support for FORD documentation generation
     conf.setenv('')
+    conf.recurse('bin', 'postconfigure')
     conf.setenv('ford', conf.env)
     conf.env.ford_mainpage = 'mainpage.md'
 
 def build(bld):
-    
+
+    bld.recurse('bin')
+    if not (bld.cmd == 'docu' and bld.env.fordonline):
+        bld.recurse('aotus')
     bld(rule='cp ${SRC} ${TGT}', source=bld.env.COCOSET, target='coco.set')
+    bld.recurse('tem')
 
     bld.add_group()
 
     # Don't create treelm when building the documentation is requested
-    if bld.cmd != 'gendoxy':
-        bld.recurse('treelm')
-    else:
+    if bld.cmd == 'docu':
         bld(rule='cp ${SRC} ${TGT}',
-            source = bld.path.find_node(['treelm', 'source', 'arrayMacros.inc']),
+            source = bld.path.find_node(['tem', 'source', 'arrayMacros.inc']),
             target = bld.path.find_or_declare('arrayMacros.inc'))
 
     # Adapters for the solvers to support.
     solv_use = []
     # Ateles:
     if bld.env.with_ateles:
-        bld.recurse(bld.env.solv_path['ateles']+'/polynomials')
+        bld.recurse(bld.env.solv_path['ateles']+'/../polynomials')
         bld.recurse(bld.env.solv_path['ateles'], 'build_atl_objs')
         solv_use.append('ply_objs')
         solv_use.append('atl_objs')
@@ -197,14 +215,14 @@ def build(bld):
     #    solv_use.append('hvs_objs')
 
     aps_ppsources = bld.path.ant_glob('source/*.fpp')
-    aps_sources = bld.path.ant_glob('source/*.f90', 
+    aps_sources = bld.path.ant_glob('source/*.f90',
                                     excl=['source/apes.f90'])
     aps_sources += aps_ppsources
 
     aps_sources += mus_source
     aps_sources += atl_source
 
-    if bld.cmd != 'gendoxy':
+    if bld.cmd != 'docu':
         bld(
             features = 'coco fc',
             source   = aps_sources,
@@ -218,7 +236,7 @@ def build(bld):
             target   = 'apes')
 
     else:
-        bld.recurse('treelm', 'post_doxy')
+        bld.recurse('tem', 'post_doxy')
         bld(
             features = 'coco',
             source   = aps_ppsources)
@@ -228,4 +246,3 @@ def cleanall(ctx):
     from waflib import Options
     Options.commands = ['distclean'] + Options.commands
     ctx.exec_command('rm coco')
-    

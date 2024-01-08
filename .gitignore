@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+.lock-waf_linux_build
+build/
+coco
+tags
