@@ -43,7 +43,7 @@ module aps_timer_module
     &                                tem_getMaxTimerVal, tem_getTimerName
   use tem_simControl_module,   only: tem_simControl_type
   use tem_comm_env_module,     only: tem_comm_env_type
-  use tem_revision_module,     only: tem_solver_revision
+  use soi_revision_module,     only: soi_solver_revision
   use tem_solveHead_module,    only: tem_solveHead_type
   use tem_comm_env_module,     only: tem_comm_env_type
 
@@ -274,7 +274,7 @@ contains
       ! total time taken for Apes
       tApes = tem_getTimerVal( timerHandle = general%solver%timerHandle )
       write(output, '(1x,a13,1x,a20,i8,1x,i8,1x,i12,1x,en12.3)' ) &
-        &   trim(tem_solver_revision), &
+        &   trim(soi_solver_revision), &
         &   trim(general%solver%simName), &
         &   general%proc%comm_size, &
         &   general%proc%nThreads,  &

@@ -7,3 +7,12 @@
 [submodule "aotus"]
 	path = aotus
 	url = ../aotus.git
+[submodule "mus"]
+	path = mus
+	url = ../musubi-source.git
+[submodule "atl"]
+	path = atl
+	url = ../ateles-source.git
+[submodule "polynomials"]
+	path = polynomials
+	url = ../polynomials.git
