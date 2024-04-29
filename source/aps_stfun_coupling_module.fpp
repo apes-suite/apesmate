@@ -54,6 +54,14 @@ module aps_stFun_coupling_module
   public :: grw_aps_stFunCplArray_type
   public :: aps_fill_stFunCoupling
 
+  public :: init
+  public :: truncate
+  public :: empty
+  public :: destroy
+  public :: placeAt
+  public :: append
+  public :: expand
+
   !> Data type contains pointer to spacetime function which has
   !! predefined = "apesmate" and pointer to spacetime function element list
   !! which contains point data for coupling on local process
