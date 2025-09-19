@@ -50,12 +50,12 @@ def configure(conf):
     conf.recurse('tem')
 
     if not conf.options.no_ateles:
+        conf.all_envs[''].with_ateles = True
         conf.recurse('polynomials')
         conf.recurse('atl')
-        conf.env['with_ateles'] = True
     if not conf.options.no_musubi:
+        conf.all_envs[''].with_musubi = True
         conf.recurse('mus')
-        conf.env['with_musubi'] = True
 
     conf.recurse('bin', 'postconfigure')
 
