@@ -34,6 +34,10 @@ module aps_musubi_module
   use mus_config_module,      only: mus_load_config
   use mus_varSys_module,      only: mus_varSys_solverData_type
   use mus_program_module,     only: mus_initialize, mus_solve, mus_finalize
+
+  ! include modules for coupled LBM-DEM simulations of solid particles
+  use mus_particle_type_module,      only: mus_particle_group_type
+  use mus_particle_timer_module,     only: mus_init_particleTimer
  
   implicit none
 
@@ -67,6 +71,9 @@ module aps_musubi_module
 
     !> musubi solver container for varSys method data
     type(mus_varSys_solverData_type) :: solverData
+
+    !> Particle group for coupled LBM-DEM simulations of solid particles
+    type(mus_particle_group_type) :: particleGroup
   end type aps_musubi_type
 
 
@@ -96,7 +103,6 @@ contains
 
     ! Initialize musubi environment
     call tem_start(codeName   = 'Musubi',                    &
-      &            version    = me%params%version,           &
       &            general    = me%params%general,           &
       &            comm       = comm,                        &
       &            simControl = me%params%general%simControl )
@@ -111,13 +117,15 @@ contains
 
     ! initialize global timers 
     call mus_init_mainTimer()
+    call mus_init_particleTimer
 
     ! load configuration file 
     call mus_load_config( scheme     = me%scheme,     &
       &                   solverData = me%solverData, &
       &                   geometry   = me%geometry,   &
       &                   params     = me%params,     &
-      &                   adapt      = me%adapt       )
+      &                   adapt      = me%adapt,      &
+      &                   particleGroup = me%particleGroup )
 
     call mus_init_levelTimer( me%geometry%tree%global%minLevel, &
       &                       me%geometry%tree%global%maxLevel )
@@ -151,11 +159,12 @@ contains
     !> overwrite solver time_control%max with apesmate time_control%max
     type(tem_time_type), intent(in) :: aps_maxTime
     !---------------------------------------------------------------------------
-    call mus_initialize(scheme     = me%scheme,     &
-      &                 solverData = me%solverData, &
-      &                 geometry   = me%geometry,   &
-      &                 params     = me%params,     &
-      &                 control    = me%control     )
+    call mus_initialize(scheme     = me%scheme,           &
+      &                 solverData = me%solverData,       &
+      &                 geometry   = me%geometry,         &
+      &                 params     = me%params,           &
+      &                 particleGroup = me%particleGroup, &
+      &                 control    = me%control           )
     
     ! set solver simulation timeControl max with apesmate timeControl max 
     ! to set solver wall time same as in apesmate while sim time is 
@@ -237,6 +246,7 @@ contains
     call mus_finalize(scheme       = me%scheme,                     &
       &               tree         = me%geometry%tree,              &
       &               params       = me%params,                     &
+      &               particleGroup= me%particleGroup,              &
       &               nBCs         = me%geometry%boundary%nBCtypes, &
       &               levelPointer = me%geometry%levelPointer,      &
       &               globIBM      = me%geometry%globIBM            )

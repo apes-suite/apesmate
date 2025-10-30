@@ -35,18 +35,11 @@ def options(opt):
 
 def configure(conf):
     '''Project configuration'''
-    from waflib import Logs
+
     conf.recurse('aotus', 'subconf')
     conf.recurse('bin', 'preconfigure')
-    conf.load('coco')
-    conf.env['COCOSET'] = 'default.coco'
-    if not conf.options.coco_reports:
-        # Make coco silent, if not explicitly asked for reports:
-        if conf.env.COCOFLAGS:
-            conf.env.COCOFLAGS.insert(0, '-s')
-            conf.env.COCOFLAGS.append('-ad')
-        else:
-            conf.env.COCOFLAGS = ['-s', '-ad']
+    if not conf.options.coco_set:
+        conf.options.coco_set = 'default.coco'
     conf.recurse('tem')
 
     if not conf.options.no_ateles:
