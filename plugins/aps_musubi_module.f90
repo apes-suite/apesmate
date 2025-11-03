@@ -101,6 +101,11 @@ contains
     type(tem_time_type), intent(inout) :: aps_now
     !--------------------------------------------------------------------------!
 
+    me%control = mus_control_type( scheme        = me%scheme,       &
+      &                         geometry      = me%geometry,     &
+      &                         params        = me%params,       &
+      &                         particleGroup = me%particleGroup )
+
     ! Initialize musubi environment
     call tem_start(codeName   = 'Musubi',                    &
       &            general    = me%params%general,           &
