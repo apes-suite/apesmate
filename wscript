@@ -59,7 +59,6 @@ def build(bld):
     if not (bld.cmd == 'docu' and bld.env.fordonline):
         bld.recurse('aotus')
     fill_revision_string(bld)
-    bld(rule='cp ${SRC} ${TGT}', source=bld.env.COCOSET, target='coco.set')
     bld.recurse('tem')
     solv_use = []
     if bld.env.with_ateles:
@@ -74,6 +73,7 @@ def build(bld):
         solv_use.append('fxtp_wrap_obj')
         atl_source = ['plugins/aps_ateles_module.f90']
     else:
+        bld.load('coco')
         atl_source = ['plugins/aps_ateles_dummy.f90']
     if bld.env.with_musubi:
         bld.recurse('mus')
