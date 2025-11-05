@@ -95,7 +95,6 @@ contains
     
     ! Initialize atekes  environment
     call tem_start( codeName   = 'ATELES',                    &
-      &             version    = 'v0.4',                      &
       &             general    = me%params%general,           &
       &             comm       = comm,                        &
       &             simcontrol = me%params%general%simControl )
