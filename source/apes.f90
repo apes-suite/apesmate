@@ -74,7 +74,6 @@ program apes
 
   ! Initialize environment
   call tem_start( codeName   = 'Apes',                   &
-    &             version    = params%version,           &
     &             general    = params%general,           &
     &             simControl = params%general%simControl )
 

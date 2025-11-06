@@ -35,18 +35,11 @@ def options(opt):
 
 def configure(conf):
     '''Project configuration'''
-    from waflib import Logs
+
     conf.recurse('aotus', 'subconf')
     conf.recurse('bin', 'preconfigure')
-    conf.load('coco')
-    conf.env['COCOSET'] = 'default.coco'
-    if not conf.options.coco_reports:
-        # Make coco silent, if not explicitly asked for reports:
-        if conf.env.COCOFLAGS:
-            conf.env.COCOFLAGS.insert(0, '-s')
-            conf.env.COCOFLAGS.append('-ad')
-        else:
-            conf.env.COCOFLAGS = ['-s', '-ad']
+    if not conf.options.coco_set:
+        conf.options.coco_set = 'default.coco'
     conf.recurse('tem')
 
     if not conf.options.no_ateles:
@@ -66,7 +59,6 @@ def build(bld):
     if not (bld.cmd == 'docu' and bld.env.fordonline):
         bld.recurse('aotus')
     fill_revision_string(bld)
-    bld(rule='cp ${SRC} ${TGT}', source=bld.env.COCOSET, target='coco.set')
     bld.recurse('tem')
     solv_use = []
     if bld.env.with_ateles:
@@ -81,6 +73,7 @@ def build(bld):
         solv_use.append('fxtp_wrap_obj')
         atl_source = ['plugins/aps_ateles_module.f90']
     else:
+        bld.load('coco')
         atl_source = ['plugins/aps_ateles_dummy.f90']
     if bld.env.with_musubi:
         bld.recurse('mus')
