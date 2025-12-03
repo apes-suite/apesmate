@@ -4,7 +4,7 @@
 !! \author Kannan Masilamani
 module aps_musubi_module
   ! include treelm modules
-  use env_module,                   only: rk
+  use env_module,                   only: rk, long_k
   use tem_general_module,           only: tem_start
   use tem_adaptation_config_module, only: tem_adapt_type
   use tem_time_module,              only: tem_time_type, tem_time_advance, &
@@ -238,12 +238,13 @@ contains
 
   !****************************************************************************!
   !> Finalize musubi domain
-  subroutine aps_finalize_musubi( me, timerHandles )
+  subroutine aps_finalize_musubi( me, timerHandles, totalElem )
     !---------------------------------------------------------------------------
     !> musubi type
     type(aps_musubi_type), intent(inout) :: me
     !> Timer handles
     type(mus_timer_handle_type), intent(in) :: timerHandles
+    integer(kind=long_k), intent(out) :: totalElem
     !---------------------------------------------------------------------------
     ! Update modular timer handle
     call mus_set_timerHandles(timerHandles)
@@ -254,7 +255,8 @@ contains
       &               particleGroup= me%particleGroup,              &
       &               nBCs         = me%geometry%boundary%nBCtypes, &
       &               levelPointer = me%geometry%levelPointer,      &
-      &               globIBM      = me%geometry%globIBM            )
+      &               globIBM      = me%geometry%globIBM,               &
+      &               totalElem  = totalElem                    )
 
 
     ! free musubi sub-communicator

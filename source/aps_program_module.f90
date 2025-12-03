@@ -398,7 +398,7 @@ contains
     !> contains all apes solvers defined in the config file
     type(aps_solver_type), target, intent(inout) :: solver
     !> Contains all information about all domains
-    type(aps_domainObj_type), intent(in) :: domainObj(:)
+    type(aps_domainObj_type), intent(inout) :: domainObj(:)
     !> apes global params
     type(aps_param_type), intent(inout) :: params
     !--------------------------------------------------------------------------!
@@ -426,7 +426,9 @@ contains
         ! finalize musubi
         call aps_finalize_musubi( me           = solver%musubi(sol_pos), &
           &                       timerHandles = domainObj(domID)        &
-          &                                      %mus_timerHandles       )
+          &                                      %mus_timerHandles,      &
+          &                       totalElem    = domainObj(domID)        &
+          &                                      %mus_totalElem          )
 
       case (ateles)
         ! finalize ateles

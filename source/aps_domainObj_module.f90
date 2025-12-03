@@ -31,7 +31,7 @@
 !! \author Kannan Masilamani
 module aps_domainObj_module
   ! treelm modules
-  use env_module,            only: rk, labelLen, pathLen
+  use env_module,            only: rk, labelLen, pathLen, long_k
   use tem_aux_module,        only: tem_abort
   use tem_logging_module,    only: logUnit, tem_last_lu
   use tem_debug_module,      only: dbgUnit
@@ -152,6 +152,8 @@ module aps_domainObj_module
 
     !> Time spent on waiting of the other domains for each domain
     integer :: cplWait
+    !> Total number of elements in this domain (for musubi)
+    integer(kind=long_k) :: mus_totalElem
   end type aps_domainObj_type
 
 contains

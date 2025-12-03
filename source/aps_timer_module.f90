@@ -190,7 +190,8 @@ contains
     character(len=PathLen)    :: output
     integer              :: iterations
     integer :: nTimers
-    real(kind=rk) :: tApes
+    real(kind=rk) :: tApes, mlups
+    integer(kind=long_k) :: totalElements
     ! ---------------------------------------------------------------------------
     nTimers = aps_timerHandles%last - aps_timerHandles%first + 1 &
       &     + 3*size(domainObj)
@@ -264,7 +265,8 @@ contains
 
       write(header,'(a,2(1x,a12))') trim(header), &
         & 'MemRSS', &    ! memory usage in sim loop
-        & 'MemHWM'       ! memory usage max
+        & 'MemHWM', &    ! memory usage max
+        & 'MLUPs'      ! million lattice updates per second
 
       !>@todo HK: ensure, that timing is actually now, and it is valid to use
       !!          the iter component of it as the overall number of iterations
@@ -286,6 +288,18 @@ contains
       enddo
 
       write(output,'(a,i12,i12)') trim(output), memRss, memHwm
+
+      totalElements = 0_long_k
+      do iDom = 1, size(domainObj)
+        ! Calculate MLUPs for each domain and sum them up
+        totalElements = totalElements + domainObj(iDom)%mus_totalElem
+      end do
+
+      mlups = real(totalElements, kind=rk) * real(iterations, kind=rk)     &
+        &      / ( tem_getTimerVal(timerHandle = aps_timerHandles%simLoop) &
+        &           * 1.0e6_rk )
+
+      write(output,'(a,1x,en12.3)') trim(output), mlups
 
       filename = trim(general%timingFile)
       write(logunit(2),*) 'Writing timing information to ', trim(filename)
