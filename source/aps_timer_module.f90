@@ -263,7 +263,7 @@ contains
       enddo
 
 
-      write(header,'(a,2(1x,a12))') trim(header), &
+      write(header,'(a,3(1x,a12))') trim(header), &
         & 'MemRSS', &    ! memory usage in sim loop
         & 'MemHWM', &    ! memory usage max
         & 'MLUPs'      ! million lattice updates per second
@@ -292,6 +292,8 @@ contains
       totalElements = 0_long_k
       do iDom = 1, size(domainObj)
         ! Calculate MLUPs for each domain and sum them up
+        write(logunit(2),*) 'Domain ', iDom, ' total elements: ',        &
+          & domainObj(iDom)%mus_totalElem
         totalElements = totalElements + domainObj(iDom)%mus_totalElem
       end do
 
