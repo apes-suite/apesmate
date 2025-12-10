@@ -31,7 +31,7 @@
 module aps_program_module
   ! treelm modules
   use mpi
-  use env_module,             only: rk, labelLen, rk_mpi
+  use env_module,             only: rk, labelLen, rk_mpi, long_k
   use tem_time_module,        only: tem_time_type, tem_time_dump
   use tem_timer_module,       only: tem_startTimer, tem_stopTimer
   use tem_timeControl_module, only: tem_timeControl_update,      &
@@ -110,6 +110,7 @@ contains
 
     call tem_startTimer( timerHandle = aps_timerHandles%initSolver )
     ! loop over local process nDomains
+    write(aps_logUnit(1),*) 'Number of local domains: ', solver%nDomains
     do iDomain = 1, solver%nDomains
       domID = solver%domainIDs(iDomain)
 
@@ -119,6 +120,7 @@ contains
 
       sol_type = domainObj(domID)%solver_type
       sol_pos = domainObj(domID)%solver_position
+      domainObj(domID)%mus_totalElem = 0_long_k
       write(aps_logUnit(1),*) 'Initialize dom:', iDomain, '- solver: ' &
         &                     // trim(domainObj(domID)%header%solName)
       select case (sol_type)

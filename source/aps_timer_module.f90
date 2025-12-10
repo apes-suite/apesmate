@@ -48,7 +48,6 @@ module aps_timer_module
   use tem_comm_env_module,     only: tem_comm_env_type
 
   use aps_domainObj_module,    only: aps_domainObj_type
-
   implicit none
 
   private
@@ -191,7 +190,6 @@ contains
     integer              :: iterations
     integer :: nTimers
     real(kind=rk) :: tApes, mlups
-    integer(kind=long_k) :: totalElements
     ! ---------------------------------------------------------------------------
     nTimers = aps_timerHandles%last - aps_timerHandles%first + 1 &
       &     + 3*size(domainObj)
@@ -289,15 +287,13 @@ contains
 
       write(output,'(a,i12,i12)') trim(output), memRss, memHwm
 
-      totalElements = 0_long_k
-      do iDom = 1, size(domainObj)
-        ! Calculate MLUPs for each domain and sum them up
-        write(logunit(2),*) 'Domain ', iDom, ' total elements: ',        &
-          & domainObj(iDom)%mus_totalElem
-        totalElements = totalElements + domainObj(iDom)%mus_totalElem
-      end do
-
-      mlups = real(totalElements, kind=rk) * real(iterations, kind=rk)     &
+      write(logUnit(3), *) 'Total elements in dom(1): ', domainObj(1)%mus_totalElem
+      write(logUnit(3), *) 'Total iterations       : ', iterations
+      write(logUnit(3), *) 'Total time (s)        : ', &
+        & tem_getTimerVal(timerHandle = aps_timerHandles%simLoop)
+      write(logUnit(3), *) 'Number of domains   : ', size(domainObj)
+      mlups = real(domainObj(1)%mus_totalElem, kind=rk) &
+        &      * real(size(domainObj), kind=rk) * real(iterations, kind=rk)     &
         &      / ( tem_getTimerVal(timerHandle = aps_timerHandles%simLoop) &
         &           * 1.0e6_rk )
 

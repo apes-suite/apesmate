@@ -255,8 +255,8 @@ contains
       &               particleGroup= me%particleGroup,              &
       &               nBCs         = me%geometry%boundary%nBCtypes, &
       &               levelPointer = me%geometry%levelPointer,      &
-      &               globIBM      = me%geometry%globIBM,               &
-      &               totalElem  = totalElem                    )
+      &               globIBM      = me%geometry%globIBM,           &
+      &               totalElem    = totalElem                      )
 
 
     ! free musubi sub-communicator
