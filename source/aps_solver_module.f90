@@ -121,7 +121,7 @@ contains
   !! domain is distributed.
   !! Also create mpi communicator groups for each domain
   subroutine aps_create_domainPartition(solver, solverCnt, domainObj,    &
-    &                                   domWeights, globProc )
+    &                                   domWeights, share_dom, globProc )
     ! -------------------------------------------------------------------------!
     !> allocates apes solvers on this local process
     type(aps_solver_type), intent(out) :: solver
@@ -133,6 +133,8 @@ contains
     !! array size - (nProcs, nDomains)
     !! @todo KM: Check if its required for dynamic load balancing
     real(kind=rk), allocatable :: domWeights(:,:)
+    !> decide whether to distribute all domains on all process
+    logical, intent(in) :: share_dom
     !> apes global communication environment
     type(tem_comm_env_type), intent(in) :: globProc
     ! -------------------------------------------------------------------------!
@@ -149,7 +151,8 @@ contains
       & nDomains       = solver%nDomains_total,          &
       & glob_nProc     = globProc%comm_size,             &
       & domWeights     = domWeights,                     &
-      & procWeight     = domainObj(:)%procWeight         )
+      & procWeight     = domainObj(:)%procWeight,        &
+      & share_dom      = share_dom                       )
 
     ! set domainIDs on all process and local process
     call aps_set_proc_domainIDs(domWeights    = domWeights,            &

@@ -96,6 +96,7 @@ program apes
     &                              solverCnt   = solverCnt,          &
     &                              domainObj   = domainObj,          &
     &                              domWeights  = params%domWeights,  &
+    &                              share_dom   = params%share_dom,   &
     &                              globProc    = params%general%proc )
 
   ! load each domain solver configuration files
