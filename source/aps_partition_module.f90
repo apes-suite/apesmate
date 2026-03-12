@@ -56,7 +56,7 @@ contains
   !! multiplying with total nProc. Then domain is distributed on each process
   !! based up their weights.
   subroutine aps_compute_partitionWeights(nDomains, glob_nProc, domWeights, &
-    &                                     procWeight)
+    &                                     procWeight, share_dom)
     !--------------------------------------------------------------------------!
     !> number of domains
     integer, intent(in) :: nDomains
@@ -66,14 +66,22 @@ contains
     real(kind=rk), allocatable, intent(out) :: domWeights(:,:)
     !> process weights for each domain
     real(kind=rk), intent(in) :: procWeight(nDomains)
+    !> whether all domains are shared on all processes
+    logical, intent(in) :: share_dom
     !--------------------------------------------------------------------------!
     real(kind = rk), dimension(nDomains) :: remain_procWeight
     real(kind = rk) :: totWeight_proc
+    real(kind = rk), parameter :: weight_eps = 100.0_rk * epsilon(1.0_rk)
     integer :: iDomain, iProc
     !--------------------------------------------------------------------------!
 
     allocate(domWeights(glob_nProc,nDomains))
     domWeights = 0.0_rk
+
+    if (share_dom) then
+      domWeights = 1.0_rk / real(nDomains, kind=rk)
+      return
+    end if
 
     remain_procWeight = procWeight
 
@@ -92,12 +100,10 @@ contains
             & 1.0_rk - totWeight_proc)
           ! compute remaining proc weight of this domain after
           ! assigning some weights on earlier processes
-          if (remain_procWeight(iDomain) > 1.0_rk) then
-            remain_procWeight(iDomain) = remain_procWeight(iDomain) &
-              & - domWeights(iProc, iDomain)
-          else
-            remain_procWeight(iDomain) = 1.0_rk - remain_procWeight(iDomain)
-          end if
+          remain_procWeight(iDomain) = remain_procWeight(iDomain) &
+            &                         - domWeights(iProc, iDomain)
+          if (remain_procWeight(iDomain) < weight_eps) &
+            & remain_procWeight(iDomain) = 0.0_rk
           ! update total weight on iProc
           totWeight_proc = sum(domWeights(iProc,:))
         endif
