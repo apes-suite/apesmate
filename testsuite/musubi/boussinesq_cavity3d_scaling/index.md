@@ -49,8 +49,13 @@ For each configuration the simulation was executed for 5000 iterations.
 Periodic health-check reductions were disabled.
 Consequently, no global reduction occurs during the simulation, ensuring that the measured performance reflects the solver itself rather than diagnostic overhead.
 
+The original datasets tested on **Snellius** are provided:
+- [Standalone Musubi fluid solver](./reference/timing_fluid_perfect.res)
+- [Standalone Musubi temperature solver](./reference/timing_T_perfect.res)
+- [Coupled Apesmate solver](./reference/timing_apes_perfect.res)
+
 This example includes template scripts for post-processing and performance analysis:
-- [plot_timing](./reference/plot_timings.py) generates runtime decomposition plots across different node counts and local workloads for the Musubi solver. The results for standalone Musubi solvers are shown in [fluid](./reference/fluid_p.png) and [T](./reference/T_p.png).
+- [measure_musubi](./reference/measure_musubi.py) generates runtime decomposition plots across different node counts and local workloads for the Musubi solver. The results for standalone Musubi solvers are shown in [fluid](./reference/fluid_p.png) and [T](./reference/T_p.png).
 - [plot_mus_speedup_eff](./reference/plot_mus_speedup_eff.py) computes weak-scaling speedup and efficiency for standalone Musubi solvers. Results are provided for [fluid](./reference/perf_fluid_perfect.png) and [T](./reference/perf_T_perfect.png).
 - [plot_speedup_eff](./reference/plot_speedup_eff.py) evaluates weak-scaling speedup and efficiency of the coupled ApesMate solver. The corresponding result is shown in [apesmate](./reference/perf_apes_p.png).
 - [plot_mlups_load](./reference/plot_mlups_load.py) analyzes throughput (MLUPS) of the coupled solver as a function of local workload.
