@@ -1,0 +1,10 @@
+num_lattices = 8 -- the number of lattices in one dimension, the total number of lattices is num_lattices^3
+delay_check_ctl = true -- whether to delay the health check of the simulation
+check_iter_num = 10000 -- checking the health of the simulation every check_iter_num iterations
+dynamic_balance_ctl = false -- whether to enable dynamic load balancing
+timing_fluid = 'timing_fluid_perfect.res' -- the file to store the timing information of the fluid solver
+timing_info_fluid = 'timeinfo_fluid' -- the file to store the detailed timing information of the fluid solver
+timing_T = 'timing_T_perfect.res' -- the file to store the timing information of the temperature solver
+timing_info_T = 'timeinfo_T' -- the file to store the detailed timing information of the temperature solver
+timing_apes = 'timing_apes_perfect.res' -- the file to store the timing information of the coupled simulation
+timing_info_apes = 'timeinfo_apes' -- the file to store the detailed timing information of the coupled simulation
