@@ -39,6 +39,10 @@ $$
 
 where $D_{xx} = D$ is the axial diffusion coefficient and $\alpha$ ($0 < \alpha \leq 1$) controls the degree of anisotropy. The reference diffusion coefficient is $D = 1.34\,\mathrm{mm^2/s}$, corresponding to a lattice relaxation time of 0.8~\cite{Mezali2023a}. The reaction rate is modeled as $h_2' = \lambda h_2$, where $h_2 = 2.3\,\mathrm{s^{-1}}$ is the thrombin decay rate from~\cite{Leiderman2011a}. Varying $\lambda$ allows analysis of how reaction kinetics influence thrombus shape and concentration profiles.
 
-Three diffusion anisotropy ratios ($\alpha = 0.1, 0.5, 1.0$) and three reaction rate coefficients ($\lambda = 20, 100, 500$) are tested to explore the interplay between diffusion anisotropy and reaction strength. The scalar field evolution is simulated using the Musubi passive-scalar solver for 22,000 time steps, coupled to the steady flow field obtained from the Musubi fluid solver. The results are shown in `reference`, with the naming pattern $tracking\_Re\_\alpha\_\lambda$.
+Three diffusion anisotropy ratios ($\alpha = 0.1, 0.5, 1.0$) and three reaction rate coefficients ($\lambda = 20, 100, 500$) are tested to explore the interplay between diffusion anisotropy and reaction strength. The scalar field evolution is simulated using the Musubi passive-scalar solver for 22,000 time steps, coupled to the steady flow field obtained from the Musubi fluid solver. The results are shown in `reference`, with the naming pattern $tracking\_Re\_\alpha\_\lambda$. The visualized quantity is the normalized concentration, with regions exceeding a threshold value of 0.5 identified as thrombogenically
+active.
 
 To extend the current one-way coupling to a two-way coupling framework, the file `musubi\_fluid.lua` is provided. In this configuration, a Brinkman term is introduced to account for the blockage effects induced by thrombus formation. This feature remains experimental, and its numerical behavior is still under investigation.
+
+## Reference
+K. Leiderman, A.L. Fogelson, Grow with the flow: a spatial-temporal model of platelet deposition and blood coagulation under flow, Math. Med. Biol. 28 (2011) 47–84.
