@@ -21,6 +21,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from timing_loader import load_timing_dataframe
+
 
 # =========================
 # Global configuration
@@ -38,48 +40,7 @@ METRICS_MAP = [
 # =========================
 def load_data(filename: Path) -> pd.DataFrame:
     """Load whitespace-separated timing data."""
-    try:
-        # df = pd.read_csv(filename, sep=r"\s+")
-        df = pd.read_csv(
-            filename,
-            sep=r"\s+",          # split on arbitrary whitespace
-            engine="python",     # robust parser
-            comment="#",         # ignore header lines starting with #
-            header=None          # we define headers manually
-        )
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find file: {filename}")
-
-    # Assign column names manually (based on file structure)
-    df.columns = [
-        "Revision",
-        "SimName",
-        "DomSize",
-        "nProcs",
-        "nThreads", # only exists when omp is enabled
-        "MLUPs",
-        "MLUPs_kernel",
-        "imbalance_percent",
-        "timeMusubi",
-        "maxIter",
-        "totalDens",
-        "timeMainLoop",
-        "timeLoadMesh",
-        "timeInitLvlD",
-        "timewRestart",
-        "timeBalance",
-        "timeSource",
-        "timeCheck", # new feature
-        "timeDoComp",
-        "timeAux",
-        "timeRelax",
-        "Comp_percent",
-        "Comm_percent",
-        "BCbuffer_percent",
-        "BC_percent",
-        "Intp_percent",
-    ]
-    return df
+    return load_timing_dataframe(filename)
 
 
 def compute_absolute_metrics(df: pd.DataFrame) -> pd.DataFrame:
@@ -94,14 +55,20 @@ def compute_absolute_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df["Abs_relax"] = df["timeRelax"]
 
     # Reconstructed from percentages
-    df["Abs_Comp"] = (df["Comp_percent"] / 100.0) * (df["timeMainLoop"])
-    df["Abs_Comm"] = (df["Comm_percent"] / 100.0) * (df["timeMainLoop"])
+    df["Abs_Comp"] = (df["Comp(%)"] / 100.0) * df["timeMainLoop"]
+    df["Abs_Comm"] = (df["Comm(%)"] / 100.0) * df["timeMainLoop"]
 
     # The sum-up of the 5 parts to the Mainloop time
     df["Sum_Percent"] = (
-        df["Abs_Source"] + df["Abs_Aux"] + df["Abs_relax"] 
-    ) / df["timeMainLoop"] * 100.0
-    + df["BCbuffer_percent"] + df["BC_percent"] + df["Intp_percent"] + df["Comp_percent"] + df["Comm_percent"]
+        (
+            df["Abs_Source"] + df["Abs_Aux"] + df["Abs_relax"]
+        ) / df["timeMainLoop"] * 100.0
+        + df["BCbuffer(%)"]
+        + df["BC(%)"]
+        + df["Intp(%)"]
+        + df["Comp(%)"]
+        + df["Comm(%)"]
+    )
 
     return df
 

@@ -15,6 +15,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
+from timing_loader import load_timing_dataframe
+
 
 # Hard-coded elements per node
 ELEMENTS_PER_NODE = [
@@ -27,27 +29,6 @@ ELEMENTS_PER_NODE = [
 ]
 
 markers = ["o", "s", "^", "D", "v", ">", "<", "P", "X", "*", "+"]
-
-
-def expand_header_tokens(raw_header_line: str):
-    """
-    Take the raw header line (without leading '#') and expand tokens that
-    contain multiple names separated by '|' into separate logical columns.
-
-    Example:
-        'fillStFun|init_cplComm|' -> ['fillStFun', 'init_cplComm']
-        'evalVal|dom_fluidWai|dom_fluidSin|dom_fluidEva|' ->
-            ['evalVal', 'dom_fluidWai', 'dom_fluidSin', 'dom_fluidEva']
-    """
-    raw_tokens = raw_header_line.split()
-    logical_headers = []
-    for raw in raw_tokens:
-        parts = raw.split("|")
-        for p in parts:
-            p = p.strip()
-            if p:
-                logical_headers.append(p)
-    return logical_headers
 
 
 def compute_index(nprocs, base=192):
@@ -66,61 +47,31 @@ def find_closest_value(value, candidates):
 
 def read_timing_data(timing_path: Path, base: int):
     """
-    Read timing_apes_ref.res and return list of (i, elem_per_node, mlups/i).
-
-    The j-th occurrence of a given i gets ELEMENTS_PER_NODE[j].
+    Read the timing file and return list entries for plotting.
     """
-    header = None
     data_points = []  # list of dicts: {i, elem, mlups_over_i}
-    counters = {}     # i -> how many times we've seen this i
+    df = load_timing_dataframe(timing_path)
 
-    with timing_path.open("r") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if not line.strip():
-                continue
+    for row in df.itertuples(index=False):
+        try:
+            nprocs = int(row.nProcs)
+            mlups = float(row.MLUPs)
+            domsize = int(row.DomSize)
+        except (AttributeError, TypeError, ValueError):
+            continue
 
-            # Header line
-            if line.startswith("#"):
-                raw_header = line.lstrip("#").strip()
-                header = expand_header_tokens(raw_header)
-                continue
+        i_float = compute_index(nprocs, base=base)
+        i = int(round(i_float))
 
-            if header is None:
-                continue  # skip until we see the header
+        if base * (2 ** i) != nprocs:
+            continue
 
-            # Skip any comment/data we don't want
-            if line.startswith("!"):
-                continue
+        elem_per_node = domsize // (2 ** i)
+        elem = find_closest_value(elem_per_node, ELEMENTS_PER_NODE)
 
-            parts = line.split()
-            if len(parts) != len(header):
-                continue
-
-            row = dict(zip(header, parts))
-
-            try:
-                nprocs = int(row["nProcs"])
-                mlups = float(row["MLUPs"])
-                domsize = int(row["DomSize"])
-            except (KeyError, ValueError):
-                continue
-
-            # compute i = log2(nprocs / base)
-            i_float = compute_index(nprocs, base=base)
-            i = int(round(i_float))
-
-            # sanity check: should be exact power of two
-            if base * (2 ** i) != nprocs:
-                continue
-
-            # Find the closest elements per node from the predefined list
-            elem_per_node = domsize // (2 ** i)
-            elem = find_closest_value(elem_per_node, ELEMENTS_PER_NODE)
-
-            data_points.append(
-                {"i": i, "elem": elem, "mlups": mlups}
-            )
+        data_points.append(
+            {"i": i, "elem": elem, "mlups": mlups}
+        )
 
     return data_points
 
@@ -219,10 +170,10 @@ def plot_speedup_efficiency(data_points, outfile: Path | None = None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot MLUPs / i vs elements per node from timing_apes_ref.res"
+        description="Plot speedup and efficiency vs nodes from a Musubi timing file"
     )
     parser.add_argument(
-        "--timing", required=True, help="Path to timing_apes_ref.res"
+        "--timing", required=True, help="Path to the Musubi timing result file"
     )
     parser.add_argument(
         "--base",
