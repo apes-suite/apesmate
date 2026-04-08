@@ -21,7 +21,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from timing_loader import load_timing_dataframe
+import gleaner
 
 
 # =========================
@@ -40,7 +40,7 @@ METRICS_MAP = [
 # =========================
 def load_data(filename: Path) -> pd.DataFrame:
     """Load whitespace-separated timing data."""
-    return load_timing_dataframe(filename)
+    return gleaner.load_timing_dataframe(filename)
 
 
 def compute_absolute_metrics(df: pd.DataFrame) -> pd.DataFrame:

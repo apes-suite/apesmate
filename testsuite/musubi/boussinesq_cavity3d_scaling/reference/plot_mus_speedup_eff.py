@@ -15,7 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-from timing_loader import load_timing_dataframe
+import gleaner
 
 
 # Hard-coded elements per node
@@ -50,7 +50,7 @@ def read_timing_data(timing_path: Path, base: int):
     Read the timing file and return list entries for plotting.
     """
     data_points = []  # list of dicts: {i, elem, mlups_over_i}
-    df = load_timing_dataframe(timing_path)
+    df = gleaner.load_timing_dataframe(timing_path)
 
     for row in df.itertuples(index=False):
         try:
