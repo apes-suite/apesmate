@@ -6,7 +6,6 @@ simulation_name = 'stenosis_flow_steady'
 timing_file = 'timing_flow_steady.res'
 io_buffer_size = 16
 -------------------------------------------------------------------------------
--- Imposing a gradually increasing velocity at the inlet to avoid numerical instability at the beginning of the simulation. The velocity will reach the target value at time_point * dt + t_needed.
 function u_in_linear(x, y, z, t)
   local u_t = {0, 0, 0}
   local t_fold = 5 -- fold of time needed going over the length
@@ -22,12 +21,13 @@ function u_in_linear(x, y, z, t)
   end
   return u_t
 end
+-- u_in_linear(0, 0, 0, 0)
 -------------------------------------------------------------------------------
 sim_control        = {
   time_control     = {
     min      = { iter = 0        },
     max      = { iter = tmax     },
-    interval = { iter = interval }
+    interval = { iter = 1 }
   }
 }
 -------------------------------------------------------------------------------
@@ -59,29 +59,42 @@ boundary_condition = {
   }
 }
 
-tracking = { 
-  { label     = 'fluid',
-    variable  = {'velocity_phy', 'pressure_phy'},
-    shape = {
-      kind = 'all'
-    },
-    folder    = tracking_folder,
-    output    = {format = 'vtk'},  
-    time_control     = { 
-      min = { iter = tmax }, max = { iter = tmax }, interval = { iter = tmax } }
-  }
-}
+-- tracking = { 
+--   { label     = 'fluid',
+--     variable  = {'velocity_phy', 'pressure_phy'},
+--     shape = {
+--       kind = 'all'
+--     },
+--     folder    = tracking_folder,
+--     output    = {format = 'vtk'},  
+--     time_control     = { 
+--       min = { iter = tmax }, max = { iter = tmax }, interval = { iter = tmax } }
+--   }
+--   -- {
+--   --   label = 'spc1',
+--   --   variable = {'c_diff'},
+--   --   reduction = {'l2norm'},
+--   --   shape = {
+--   --     kind = 'all'
+--   --   },
+--   --   folder = 'tracking/',
+--   --   output = {format = 'ascii'},
+--   --   time_control     = { 
+--   --     min = { iter = t_total }, max = { iter = t_total }, interval = { iter = t_total } }
+--   -- }
+-- }
+
+-------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 restart = {
-  -- read  = 'restart/stenosis_flow_steady_lastHeader.lua',
-  write = 'restart/',
-  time_control = {
-    -- min      = { iter = time_point  },
-    -- max      = { iter = time_point  },
-    -- interval = { iter = time_point  }
-    min      = { iter = tmax  },
-    max      = { iter = tmax  },
-    interval = { iter = tmax  }
-  },
+  read  = 'restart/stenosis_flow_steady_lastHeader.lua',
+  -- write = 'restart/',
+  -- time_control = {
+  --   min      = { iter = time_point  },
+  --   max      = { iter = time_point  },
+  --   interval = { iter = time_point  }
+  -- },
 }
 -------------------------------------------------------------------------------
+-- start = math.ceil(1./dt*13/12)

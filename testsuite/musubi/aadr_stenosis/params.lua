@@ -2,6 +2,7 @@ require 'args'
 
 ---------------- General parameters -------------------
 simulation_name = 'stenosis'
+-- tracking_folder = './tracking_1/'
 if_print = false
 ---------------- General parameters -------------------
 ---
@@ -9,7 +10,7 @@ if_print = false
 ------------------- Geoemtric parameter -------------------
 length = 16 -- mm, set length for the bounding box
 diameter = 1 -- (-0.2 ~ 0.3) at stenosis
-mesh_level = 1
+mesh_level = 2
 resolution = 2 ^ mesh_level
 
 pts_dia = 32 -- number of points on diameter
@@ -26,19 +27,15 @@ seed_orig = { 0, 0, 0 }
 ---
 ---
 ------------------- Iteration parameters -------------------
--- Time point to start the coupled simulation, in unit of iteration,
---   set to 0 for starting from the beginning
-time_point         = 107000
+time_point         = 0
+tstart             = 0
+tmax               = 400000
+interval           = 5000
 
-tstart             = 0 + time_point
-tmax               = 10000 + time_point
-interval           = 500
-
--- The time setup for steady flow ran by standalone Musubi solver.
--- It targets to reach the steady state before the coupled simulation starts.
--- tstart = 0
--- interval = 1000
--- tmax = 10000
+time_point = tmax
+tstart = tmax
+interval = 500 * 2
+tmax = tstart + 22000
 ------------------ Iteration parameters -------------------
 ---
 ---
@@ -64,6 +61,14 @@ if if_print then
     print("dt = "..dt)
     print("u_L = "..u_L)
 end
+
+-- tau_D = 0.55
+-- D_L = (tau_D - 0.5) / 3.0
+-- D = D_L * dx^2 / dt
+-- if if_print then
+--   print("D = "..D)
+--   print("tau_D = "..tau_D)
+-- end
 ----------- Lattice parameters with diffusive scaling -----------
 ---
 ---

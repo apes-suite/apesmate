@@ -1,16 +1,11 @@
 require 'params_ps'
 
-mesh = './mesh/'  
+mesh               = './mesh/'  
 io_buffer_size = 16
-logging = {level=1, filename = 'log_ps_axis_flow'}
+logging = {level=3, filename = 'log_ps_axis_flow'}
 simulation_name = 'T'
 timing_file = 'timing_ps_axis_flow.res'
-
-Dxx = D
-Dyy = D*diff_ratio
-Dzz = D*diff_ratio
 -------------------------------------------------------------------------------
--- Imposing a gradually increasing pressure at the middle boundary, which is the stenosis region, to avoid numerical instability at the beginning of the simulation. The pressure will reach the target value at time_point * dt + t_needed.
 function pressureOnBnd(x, y, z, t)
   local t_fold = 5 -- fold of time needed going over the length
   local t_needed = length / dx * t_fold * dt
@@ -24,7 +19,6 @@ function pressureOnBnd(x, y, z, t)
 end
 -------------------------------------------------------------------------------
 -- Stenosis geometry function
--- For any future use related to geometry
 function stenosis_geometry(x, y, z, t)
     local origin = {}
 
@@ -61,17 +55,12 @@ physics  = { dt = dt,  rho0 = con_ref }
 identify = {
   label      = 'species',
   kind       = 'passive_scalar',
-  relaxation= {
-    -- bgk, trt, mrt are supported for anisotropic diffusion
-    name = 'trt',
-    -- There are some models for anisotropic diffusion, e.g.,
-    -- Emodel, EmodelCorr, Lmodel
-    variant = 'EmodelCorr'
-  },
-  layout     = 'd3q19'
+  relaxation = 'trt',
+  layout     = 'd3q19',
+  order      = 'Emodel_Corr'
 }
-
 transport_velocity = 'velocity_fluid'
+-- cylindrical_coord = 'stenosis_geo_param'
 
 glob_source = {
   varname = 'T_source',
@@ -83,7 +72,7 @@ variable = {
     name = 'velocity_fluid',
     ncomponents = 3,
     vartype = 'st_fun',
-    -- st_fun = {0., 0.0, 0.0} -- uniform zero velocity, for debugging
+    -- st_fun = {0., 0.0, 0.0}
     st_fun = {
       predefined = 'apesmate',
       domain_from = 'dom_fluid',
@@ -104,23 +93,27 @@ variable = {
       kind='multiplication',
       input_varname={'lambda', 'T_density'},
                 }
-  }
+  }, 
+  -- {
+  --   name = 'stenosis_geo_param',
+  --   ncomponents = 3,
+  --   vartype = 'st_fun',
+  --   st_fun = stenosis_geometry
+  -- }
 }
 
 field = { 
   label   = 'T',
   species = {
-    -- diff_coeff controls the free parameter of diffusion, 
-    -- which is set to the average of the tensor components
-    -- if test fails e.g. with bgk model, try setting diff_coeff with the given tau
-    -- i.e. diff_coeff = (tau - 0.5) / 3
-    diff_coeff = (Dxx+Dyy+Dzz)/3,
-    -- diff_tensor sets the anisotropic diffusion tensor
-    diff_tensor = {
-      Dxx = Dxx, -- Dxx is the diffusion coefficient in the axial direction
-      Dyy = Dyy, -- Dyy and Dzz are the diffusion coefficients in the transverse direction
-      Dzz = Dzz
-    }
+    -- lambda = 3/4,
+    diff_coeff = {
+      
+      Dxx = D*0.1,
+      Dyy = D*diff_ratio,
+      Dzz = D*diff_ratio,
+      -- omega = 1.5
+    }, 
+    
   },
   initial_condition = { pressure  = con_press_init,
                         velocityX = 0.0,
@@ -134,7 +127,7 @@ field = {
       },
       { 
         label = 'middle', 
-        kind = 'pressure_antibounceback',
+        kind = 'pressure_antiBounceBack_pasScal',
         pressure = pressureOnBnd
       },
       { 
@@ -150,7 +143,7 @@ field = {
     
   }
 }
--------------------------------------------------------------------------------
+
 tracking = { 
   { 
     label     = 'T',
@@ -162,6 +155,43 @@ tracking = {
     output    = {format = 'vtk'},  
     time_control     = { 
       min = { iter = tstart }, max = { iter = tmax }, interval = { iter = interval } }
-  }
+  },
+  -- {
+  --   label   = 'vel_ave',
+  --   variable = {'vel_Lx'},
+  --   shape = {
+  --     kind = 'all'
+  --   },
+  --   folder    = 'tracking/',
+  --   output    = {format = 'ascii'},  
+  --   time_control     = { 
+  --     min = { iter = 0 }, max = { iter = tmax }, interval = { iter = interval } }
+  -- }
+  -- {
+  --   label = 'spc1',
+  --   variable = {'c_diff'},
+  --   reduction = {'l2norm'},
+  --   shape = {
+  --     kind = 'all'
+  --   },
+  --   folder = 'tracking/',
+  --   output = {format = 'ascii'},
+  --   time_control     = { 
+  --     min = { iter = t_total }, max = { iter = t_total }, interval = { iter = t_total } }
+  -- }
 }
+
 -------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+-- restart = {
+--   -- read  = 'restart/colace_ps_lastHeader.lua',
+--   write = 'restart_2/',
+--   time_control = {
+--     min      = { iter = tmax  },
+--     max      = { iter = tmax  },
+--     interval = { iter = tmax  }
+--   },
+-- }
+-------------------------------------------------------------------------------
+-- start = math.ceil(1/dt*13/12)
